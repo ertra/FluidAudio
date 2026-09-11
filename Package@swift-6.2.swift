@@ -27,9 +27,11 @@ let package = Package(
                 "MachTaskSelfWrapper",
             ],
             path: "Sources/FluidAudio",
-            // Echo99 does not use LuxTTS. Exclude its implementation and resources
-            // at package planning time, before compilation or resource copying.
-            exclude: ["ASR/Parakeet/Unified/benchmark.md", "TTS/LuxTts"]
+            // Echo99 uses PocketTTS. Keep shared helpers; exclude other synthesis engines.
+            exclude: [
+                "ASR/Parakeet/Unified/benchmark.md", "TTS/LuxTts",
+                "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3", "TTS/NeuTts", "TTS/Inflect",
+            ]
         ),
         .target(
             name: "FastClusterWrapper",
@@ -45,7 +47,7 @@ let package = Package(
             name: "FluidAudioCLI",
             dependencies: ["FluidAudio"],
             path: "Sources/FluidAudioCLI",
-            exclude: ["README.md", "Commands/TTS/LuxTtsG2pDumpCommand.swift"],
+            exclude: ["README.md", "Commands/TTS/LuxTtsG2pDumpCommand.swift", "Commands/TTSAsrVerifyCommand.swift"],
             resources: [
                 .process("Utils/english.json")
             ]
@@ -56,7 +58,10 @@ let package = Package(
                 "FluidAudio",
                 "FluidAudioCLI",
             ],
-            exclude: ["TTS/LuxTts"],
+            exclude: [
+                "TTS/LuxTts", "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3",
+                "TTS/Inflect", "TTS/NeuTtsTokenizerTests.swift",
+            ],
             resources: [
                 // Real recordings (cleared for public release by the speaker) for the
                 // streaming final-window regression, issue #855.
