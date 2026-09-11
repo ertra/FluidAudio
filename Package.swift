@@ -28,11 +28,9 @@ let package = Package(
                 "NemoTextProcessing",
             ],
             path: "Sources/FluidAudio",
-            exclude: ["ASR/Parakeet/Unified/benchmark.md"],
-            resources: [
-                // Keep .process: .copy of a Resources-named directory breaks Apple code signing on iOS.
-                .process("TTS/LuxTts/G2p/Resources")
-            ]
+            // Echo99 does not use LuxTTS. Exclude its implementation and resources
+            // at package planning time, before compilation or resource copying.
+            exclude: ["ASR/Parakeet/Unified/benchmark.md", "TTS/LuxTts"]
         ),
         // Byte-exact NeMo text normalization (FST engine, all 7 languages).
         // Prebuilt xcframework from FluidInference/text-processing-rs v0.3.0.
@@ -58,7 +56,7 @@ let package = Package(
             name: "FluidAudioCLI",
             dependencies: ["FluidAudio"],
             path: "Sources/FluidAudioCLI",
-            exclude: ["README.md"],
+            exclude: ["README.md", "Commands/TTS/LuxTtsG2pDumpCommand.swift"],
             resources: [
                 .process("Utils/english.json")
             ]
@@ -69,11 +67,11 @@ let package = Package(
                 "FluidAudio",
                 "FluidAudioCLI",
             ],
+            exclude: ["TTS/LuxTts"],
             resources: [
-                .process("TTS/LuxTts/Resources"),
                 // Real recordings (cleared for public release by the speaker) for the
                 // streaming final-window regression, issue #855.
-                .copy("ASR/Parakeet/SlidingWindow/Fixtures"),
+                .copy("ASR/Parakeet/SlidingWindow/Fixtures")
             ]
         ),
     ],

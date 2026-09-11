@@ -83,13 +83,6 @@ public enum Repo: String, CaseIterable, Sendable {
     /// `.mlpackage` sources alongside them are never downloaded. Conversion
     /// lives in mobius (`models/tts/neutts-2e/coreml`).
     case neuTts = "FluidInference/neutts-2e-coreml"
-    /// LuxTTS (ZipVoice-Distill) — 48 kHz zero-shot voice-cloning TTS.
-    /// Two decoder graphs per fixed shape bucket: `gpu/` (original graph,
-    /// macOS GPU path) and `ane/` (ANE-canonical rewrite, iOS path), plus
-    /// fixed-shape Vocos vocoders under `vocoder/` and the shared
-    /// `tokens.txt` / `config.json`. Conversion lives in mobius
-    /// (`models/tts/zipvoice`).
-    case luxtts = "FluidInference/luxtts-coreml"
     /// Inflect v2 (Micro / Nano) — ultra-tiny VITS-family English TTS. One repo
     /// with two variant subdirectories (`micro/`, `nano/`), each holding
     /// `encoder.mlmodelc` + 8 `synthesizer_f<N>.mlmodelc` frame buckets.
@@ -172,8 +165,6 @@ public enum Repo: String, CaseIterable, Sendable {
             return "StyleTTS-2-coreml/iteration_3/compiled"
         case .supertonic3:
             return "supertonic-3-coreml"
-        case .luxtts:
-            return "luxtts-coreml"
         case .inflectMicro:
             return "inflect-v2-coreml/micro"
         case .inflectNano:
@@ -1301,74 +1292,6 @@ public enum ModelNames {
             [encoderFile] + InflectConstants.frameBuckets.map { synthesizerFile(frames: $0) })
     }
 
-    /// LuxTTS (ZipVoice-Distill) model names. The HF repo publishes the same
-    /// text encoder + flow-matching decoder in two graph layouts:
-    ///   - `gpu/`  — original graph; fastest on Mac GPU (do NOT run on ANE:
-    ///     the seq-first rel-pos attention path corrupts audio there)
-    ///   - `ane/`  — ANE-canonical rewrite; 100% ANE placement (iOS path)
-    /// plus fixed-shape Vocos vocoders (282 / 555 generated frames) and the
-    /// shared `tokens.txt` / `config.json`. All decoder I/O is identical
-    /// across the two graphs.
-    public enum LuxTts {
-        public static let gpuVariant = "gpu"
-        public static let aneVariant = "ane"
-
-        /// Platform default graph variant: `gpu/` on macOS, `ane/` elsewhere.
-        ///
-        /// The `FLUIDAUDIO_LUXTTS_VARIANT` environment variable overrides this
-        /// (accepts `gpu` / `ane`). It exists so the iOS `ane/` path can be
-        /// exercised on macOS — the M-series ANE runs the `ane/` graph under
-        /// `.cpuAndNeuralEngine` exactly as an iPhone would, so the override
-        /// is the on-device validation seam without an `#if os(iOS)` fork.
-        public static var defaultVariant: String {
-            if let override = variantOverride { return override }
-            #if os(macOS)
-            return gpuVariant
-            #else
-            return aneVariant
-            #endif
-        }
-
-        /// `gpu` / `ane` parsed from `FLUIDAUDIO_LUXTTS_VARIANT`, or `nil` when
-        /// unset/unrecognized (falls back to the platform default).
-        static var variantOverride: String? {
-            guard
-                let raw = ProcessInfo.processInfo.environment["FLUIDAUDIO_LUXTTS_VARIANT"]?
-                    .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            else { return nil }
-            switch raw {
-            case gpuVariant: return gpuVariant
-            case aneVariant: return aneVariant
-            default: return nil
-            }
-        }
-
-        public static let tokensFile = "tokens.txt"
-        public static let configFile = "config.json"
-        public static let vocoder282File = "vocoder/Vocoder282.mlmodelc"
-        public static let vocoder555File = "vocoder/Vocoder555.mlmodelc"
-
-        public static func textEncoderFile(variant: String) -> String {
-            "\(variant)/TextEncoder.mlmodelc"
-        }
-
-        public static func fmDecoderFile(variant: String) -> String {
-            "\(variant)/FmDecoder.mlmodelc"
-        }
-
-        public static func requiredFiles(variant: String?) -> Set<String> {
-            let v = variant ?? defaultVariant
-            return [
-                textEncoderFile(variant: v),
-                fmDecoderFile(variant: v),
-                vocoder282File,
-                vocoder555File,
-                tokensFile,
-                configFile,
-            ]
-        }
-    }
-
     /// Multilingual G2P (CharsiuG2P ByT5) model names
     public enum MultilingualG2P {
         public static let encoder = "MultilingualG2PEncoder"
@@ -1625,9 +1548,6 @@ public enum ModelNames {
             return ModelNames.Supertonic3.requiredFiles(veVariant: variant)
         case .neuTts:
             return ModelNames.NeuTts.requiredModels
-        case .luxtts:
-            // Variants: "gpu" (macOS) / "ane" (iOS); nil → platform default.
-            return ModelNames.LuxTts.requiredFiles(variant: variant)
         case .inflectMicro, .inflectNano:
             return ModelNames.Inflect.requiredModels
         }
