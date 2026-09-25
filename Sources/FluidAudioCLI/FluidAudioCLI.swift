@@ -46,10 +46,6 @@ struct FluidAudioCLI {
             await MultiStreamCommand.run(arguments: Array(arguments.dropFirst(2)))
         case "tts":
             await TTS.run(arguments: Array(arguments.dropFirst(2)))
-        case "tts-asr-verify":
-            await TTSAsrVerifyCommand.run(arguments: Array(arguments.dropFirst(2)))
-        case "luxtts-g2p-dump":
-            await LuxTtsG2pDumpCommand.run(arguments: Array(arguments.dropFirst(2)))
         case "tts-benchmark":
             await TtsBenchmarkCommand.run(arguments: Array(arguments.dropFirst(2)))
         case "minimax-corpus":
@@ -140,8 +136,7 @@ struct FluidAudioCLI {
                 fleurs-benchmark        Run multilingual ASR benchmark on FLEURS dataset
                 transcribe              Transcribe audio file using streaming ASR
                 multi-stream            Transcribe multiple audio files in parallel
-                tts                     Synthesize speech (KokoroAne / PocketTTS / StyleTTS2 / NeuTTS / Inflect beta)
-                tts-asr-verify          Batch TTS→ASR roundtrip WER verification
+                tts                     Synthesize speech (PocketTTS)
                 tts-benchmark           Quantitative TTS benchmark (latency, quality, compute-unit sweep)
                 minimax-corpus          Fetch MiniMax TTS Multilingual Test Set into Benchmarks/tts/corpus/minimax
                 parakeet-eou            Run Parakeet EOU Streaming ASR on a single file

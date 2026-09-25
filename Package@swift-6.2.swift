@@ -2,12 +2,6 @@
 import PackageDescription
 import Foundation
 
-// Tools 6.2+ manifest: identical to Package.swift plus the `NemoTextProcessing`
-// trait. Keep the two in sync; Package.swift serves toolchains < 6.2, which
-// always link the engine. (SwiftPM 6.1 accepts the trait syntax but still
-// links a trait-conditioned binary target — verified on Xcode 16.4 — so the
-// opt-out is gated at 6.2.)
-
 let package = Package(
     name: "FluidAudio",
     platforms: [
@@ -24,19 +18,6 @@ let package = Package(
             targets: ["FluidAudioCLI"]
         ),
     ],
-    traits: [
-        // Opt out of the NeMo text-normalization engine (~8 MB per slice, a prebuilt
-        // Rust staticlib) for ASR/VAD/diarization-only apps, or when the app
-        // links its own Rust runtime (#880, #888):
-        //   .package(url: ..., traits: [])
-        // TTS frontends and `TextNormalizer` then pass text through unchanged
-        // and report `isNativeAvailable == false`.
-        .trait(
-            name: "NemoTextProcessing",
-            description: "Link the bundled NeMo text-normalization engine (TTS frontends, ITN)."
-        ),
-        .default(enabledTraits: ["NemoTextProcessing"]),
-    ],
     dependencies: [],
     targets: [
         .target(
@@ -44,23 +25,14 @@ let package = Package(
             dependencies: [
                 "FastClusterWrapper",
                 "MachTaskSelfWrapper",
-                .target(name: "NemoTextProcessing", condition: .when(traits: ["NemoTextProcessing"])),
             ],
             path: "Sources/FluidAudio",
-            exclude: ["ASR/Parakeet/Unified/benchmark.md"],
-            resources: [
-                // Keep .process: .copy of a Resources-named directory breaks Apple code signing on iOS.
-                .process("TTS/LuxTts/G2p/Resources")
+            // Echo99 uses PocketTTS. Keep shared helpers; exclude other synthesis engines.
+            exclude: [
+                "ASR/Parakeet/Unified/benchmark.md", "TTS/LuxTts",
+                "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3", "TTS/NeuTts", "TTS/Inflect",
+                "TTS/Chatterbox",
             ]
-        ),
-        // Byte-exact NeMo text normalization (FST engine, all 7 languages).
-        // Prebuilt xcframework from FluidInference/text-processing-rs v0.3.1
-        // (macOS, iOS, iOS Simulator and Mac Catalyst slices).
-        .binaryTarget(
-            name: "NemoTextProcessing",
-            url:
-                "https://github.com/FluidInference/text-processing-rs/releases/download/v0.3.1/NemoTextProcessing.xcframework.zip",
-            checksum: "5fa8c10d4ec26c1bb2413125f351a7222a4c68a23b74476680fbada7e26fc6aa"
         ),
         .target(
             name: "FastClusterWrapper",
@@ -76,7 +48,7 @@ let package = Package(
             name: "FluidAudioCLI",
             dependencies: ["FluidAudio"],
             path: "Sources/FluidAudioCLI",
-            exclude: ["README.md"],
+            exclude: ["README.md", "Commands/TTS/LuxTtsG2pDumpCommand.swift", "Commands/TTSAsrVerifyCommand.swift"],
             resources: [
                 .process("Utils/english.json")
             ]
@@ -87,8 +59,11 @@ let package = Package(
                 "FluidAudio",
                 "FluidAudioCLI",
             ],
+            exclude: [
+                "TTS/LuxTts", "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3",
+                "TTS/Inflect", "TTS/NeuTtsTokenizerTests.swift", "TTS/Chatterbox",
+            ],
             resources: [
-                .process("TTS/LuxTts/Resources"),
                 .process("TTS/PocketTTS/Fixtures"),
                 // Real recordings (cleared for public release by the speaker) for the
                 // streaming final-window regression, issue #855.
