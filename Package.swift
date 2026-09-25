@@ -26,26 +26,14 @@ let package = Package(
             dependencies: [
                 "FastClusterWrapper",
                 "MachTaskSelfWrapper",
-                // The prebuilt xcframework has no visionOS slice.
-                .target(name: "NemoTextProcessing", condition: .when(platforms: [.macOS, .iOS, .macCatalyst])),
             ],
             path: "Sources/FluidAudio",
-            exclude: ["ASR/Parakeet/Unified/benchmark.md"],
-            resources: [
-                // Keep .process: .copy of a Resources-named directory breaks Apple code signing on iOS.
-                .process("TTS/LuxTts/G2p/Resources")
+            // Echo99 uses PocketTTS. Keep shared helpers; exclude other synthesis engines.
+            exclude: [
+                "ASR/Parakeet/Unified/benchmark.md", "TTS/LuxTts",
+                "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3", "TTS/NeuTts", "TTS/Inflect",
+                "TTS/Chatterbox", "TTS/Paradee",
             ]
-        ),
-        // Byte-exact NeMo text normalization (FST engine, all 7 languages).
-        // Prebuilt xcframework from FluidInference/text-processing-rs v0.3.1
-        // (macOS, iOS, iOS Simulator and Mac Catalyst slices).
-        // Always linked on tools < 6.2; Package@swift-6.2.swift exposes it as
-        // the opt-out `NemoTextProcessing` trait (#880, #888).
-        .binaryTarget(
-            name: "NemoTextProcessing",
-            url:
-                "https://github.com/FluidInference/text-processing-rs/releases/download/v0.3.1/NemoTextProcessing.xcframework.zip",
-            checksum: "5fa8c10d4ec26c1bb2413125f351a7222a4c68a23b74476680fbada7e26fc6aa"
         ),
         .target(
             name: "FastClusterWrapper",
@@ -61,7 +49,7 @@ let package = Package(
             name: "FluidAudioCLI",
             dependencies: ["FluidAudio"],
             path: "Sources/FluidAudioCLI",
-            exclude: ["README.md"],
+            exclude: ["README.md", "Commands/TTS/LuxTtsG2pDumpCommand.swift", "Commands/TTSAsrVerifyCommand.swift"],
             resources: [
                 .process("Utils/english.json")
             ]
@@ -72,8 +60,11 @@ let package = Package(
                 "FluidAudio",
                 "FluidAudioCLI",
             ],
+            exclude: [
+                "TTS/LuxTts", "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3",
+                "TTS/Inflect", "TTS/NeuTtsTokenizerTests.swift", "TTS/Chatterbox", "TTS/Paradee",
+            ],
             resources: [
-                .process("TTS/LuxTts/Resources"),
                 .process("TTS/PocketTTS/Fixtures"),
                 // Real recordings (cleared for public release by the speaker) for the
                 // streaming final-window regression, issue #855.
