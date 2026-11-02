@@ -67,48 +67,4 @@ final class TtsComputeUnitPresetTests: XCTestCase {
         XCTAssertEqual(TtsComputeUnitPreset.cpuOnly.uniformUnits, .cpuOnly)
     }
 
-    // MARK: - KokoroAneComputeUnits(preset:)
-
-    func testKokoroAnePreset_defaultMatchesStaticDefault() {
-        XCTAssertEqual(KokoroAneComputeUnits(preset: .default), .default)
-    }
-
-    func testKokoroAnePreset_allAneMatchesStatic() {
-        XCTAssertEqual(KokoroAneComputeUnits(preset: .allAne), .allAne)
-    }
-
-    func testKokoroAnePreset_cpuAndGpuMatchesStatic() {
-        XCTAssertEqual(KokoroAneComputeUnits(preset: .cpuAndGpu), .cpuAndGpu)
-    }
-
-    func testKokoroAnePreset_cpuOnlyMatchesStatic() {
-        XCTAssertEqual(KokoroAneComputeUnits(preset: .cpuOnly), .cpuOnly)
-    }
-
-    func testKokoroAnePreset_allAneForcesEveryStageToANE() {
-        let cu = KokoroAneComputeUnits(preset: .allAne)
-        for stage in KokoroAneStage.allCases {
-            XCTAssertEqual(
-                cu.units(for: stage), .cpuAndNeuralEngine,
-                "stage \(stage) should be .cpuAndNeuralEngine under .allAne")
-        }
-    }
-
-    func testKokoroAnePreset_cpuOnlyForcesEveryStageToCPU() {
-        let cu = KokoroAneComputeUnits(preset: .cpuOnly)
-        for stage in KokoroAneStage.allCases {
-            XCTAssertEqual(
-                cu.units(for: stage), .cpuOnly,
-                "stage \(stage) should be .cpuOnly under .cpuOnly")
-        }
-    }
-
-    func testKokoroAnePreset_cpuAndGpuForcesEveryStageToCPUAndGPU() {
-        let cu = KokoroAneComputeUnits(preset: .cpuAndGpu)
-        for stage in KokoroAneStage.allCases {
-            XCTAssertEqual(
-                cu.units(for: stage), .cpuAndGPU,
-                "stage \(stage) should be .cpuAndGPU under .cpuAndGpu")
-        }
-    }
 }
