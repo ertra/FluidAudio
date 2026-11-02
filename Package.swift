@@ -27,36 +27,22 @@ let package = Package(
             dependencies: [
                 "FastClusterWrapper",
                 "MachTaskSelfWrapper",
-                // The prebuilt xcframework has no visionOS or tvOS slice.
-                .target(name: "NemoTextProcessing", condition: .when(platforms: [.macOS, .iOS, .macCatalyst])),
-                "LuxTtsG2pResources",
             ],
             path: "Sources/FluidAudio",
-            exclude: ["ASR/Parakeet/Unified/benchmark.md"],
+            // Echo99 uses PocketTTS. Keep shared helpers; exclude other synthesis engines and the
+            // ASR and diarizer engines Echo99 never calls.
+            exclude: [
+                "ASR/Parakeet/Unified/benchmark.md", "TTS/LuxTts",
+                "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3", "TTS/NeuTts", "TTS/Inflect",
+                "TTS/Chatterbox", "TTS/Paradee", "TTS/PocketTTS/Small", "TTS/PocketTTS/Phonon",
+                "TTS/LFM3Audio", "ASR/LFM3Audio", "Shared/CoreAIStorage.swift",
+                "ASR/Canary", "ASR/Cohere", "ASR/NemotronTranscribeLite", "Diarizer/LS-EEND",
+            ],
             swiftSettings: [
-                // Package@swift-6.2.swift exposes these as opt-out traits (#990).
+                // Upstream's opt-out traits, always on: Echo99 uses both subsystems.
                 .define("TTS"),
                 .define("Diarizer"),
             ]
-        ),
-        .target(
-            name: "LuxTtsG2pResources",
-            path: "Sources/LuxTtsG2pResources",
-            resources: [
-                // Keep .process: .copy of a Resources-named directory breaks Apple code signing on iOS.
-                .process("Resources")
-            ]
-        ),
-        // Byte-exact NeMo text normalization (FST engine, all 7 languages).
-        // Prebuilt xcframework from FluidInference/text-processing-rs v0.3.4
-        // (macOS, iOS, iOS Simulator and Mac Catalyst slices).
-        // Always linked on tools < 6.2; Package@swift-6.2.swift exposes it as
-        // the opt-out `NemoTextProcessing` trait (#880, #888).
-        .binaryTarget(
-            name: "NemoTextProcessing",
-            url:
-                "https://github.com/FluidInference/text-processing-rs/releases/download/v0.3.4/NemoTextProcessing.xcframework.zip",
-            checksum: "fdfebc5ce0938624435aa217d5425394f0b946cc0dd47bd01b66917e671be851"
         ),
         .target(
             name: "FastClusterWrapper",
@@ -72,7 +58,10 @@ let package = Package(
             name: "FluidAudioCLI",
             dependencies: ["FluidAudio"],
             path: "Sources/FluidAudioCLI",
-            exclude: ["README.md"],
+            exclude: ["README.md", "Commands/TTS/LuxTtsG2pDumpCommand.swift", "Commands/TTSAsrVerifyCommand.swift", "Commands/ASR/LFM3AudioCommand.swift",
+                "Commands/ASR/CanaryEarningsBenchmark.swift", "Commands/ASR/CanaryTranscribeCommand.swift",
+                "Commands/ASR/Cohere", "Commands/ASR/Nemotron35TranscribeCommand.swift",
+                "Commands/LSEENDBenchmark.swift", "Commands/LSEENDCommand.swift"],
             resources: [
                 .process("Utils/english.json")
             ]
@@ -83,8 +72,15 @@ let package = Package(
                 "FluidAudio",
                 "FluidAudioCLI",
             ],
+            exclude: [
+                "TTS/LuxTts", "TTS/KokoroAne", "TTS/StyleTTS2", "TTS/Supertonic3",
+                "TTS/Inflect", "TTS/NeuTtsTokenizerTests.swift", "TTS/Chatterbox", "TTS/Paradee", "ASR/LFM3Audio",
+                "TTS/PocketTTS/PocketTtsSmallTests.swift", "TTS/PocketTTS/PhononTextNormalizerTests.swift",
+                "TTS/PocketTTS/Fixtures/phonon_normalizer_golden.json", "TTS/G2P/G2PModelDirectoryTests.swift",
+                "ASR/Canary", "ASR/Cohere", "ASR/NemotronTranscribeLite", "Diarizer/LS-EEND",
+                "Diarizer/SpeakerEnrollmentTests.swift",
+            ],
             resources: [
-                .process("TTS/LuxTts/Resources"),
                 .process("TTS/PocketTTS/Fixtures"),
                 // Real recordings (cleared for public release by the speaker) for the
                 // streaming final-window regression, issue #855.
